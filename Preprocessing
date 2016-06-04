@@ -133,15 +133,11 @@ for i in range(len(train_df2['Breed'])):
         train_df2.iloc[i,6] = 'BLACK_TAN'
     elif 'GRAY' in train_df2.iloc[i,6].upper():
         train_df2.iloc[i,6] = 'GRAY'
-    elif 'SABLE' in train_df2.iloc[i,6].upper():
-        train_df2.iloc[i,6] = 'BLACK_TAN'
     else:
         train_df2.iloc[i,6] = 'OTHER'
-    
-train_df2['Breed'] = np.where('BULL' in upper(train_df2['Breed']), 'BULL',train_df2['Breed'])
 
 
-x_cat = pd.DataFrame(train_df2.iloc[0:,2])
+x_cat = pd.DataFrame(train_df2.iloc[0:,4:7])
 x_cat_dict = x_cat.to_dict('records')
 #
 vectorizer = DV( sparse = False )
@@ -296,4 +292,5 @@ predict_set4 = predict_set3.rename(columns={'AdoptionPred' : 'Adoption', 'DiedPr
 
 #Output Submission
 predict_set4.to_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/SubmissionFileRFv4.csv', header=1, index=False)
+
 
