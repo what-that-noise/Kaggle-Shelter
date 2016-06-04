@@ -94,9 +94,51 @@ for i in range(len(train_df2['Breed'])):
         train_df2.iloc[i,5] = 'CATTLE'
     elif 'HUSKY' in train_df2.iloc[i,5].upper():
         train_df2.iloc[i,5] = 'HUSKY'
-    else train_df2.iloc[i,5] = 'OTHER'
+    else:
+        train_df2.iloc[i, 5] = 'OTHER'
     
-    train_df2['Breed'] = np.where('BULL' in upper(train_df2['Breed']), 'BULL',train_df2['Breed'])
+    if 'TORT' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'TORT'
+    elif 'WHITE' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'WHITE'
+    elif 'BLACK' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLACK'
+    elif 'BROWN' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BROWN'
+    elif 'TAN' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BROWN'
+    elif 'FAWN' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BROWN'
+    elif 'YELLOW' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BROWN'
+    elif 'BLACK/WHITE' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLACK_WHITE'
+    elif 'WHITE/BLACK' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLACK_WHITE'
+    elif 'CALICO' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'CALICO'
+    elif 'ORANGE' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'ORANGE'
+    elif 'BLUE' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLUE'
+    elif 'BRINDLE' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BRINDLE'
+    elif 'BLUE' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLUE'
+    elif 'BLACK/TAN' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLACK_TAN'
+    elif 'TAN/BLACK' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLACK_TAN'
+    elif 'SABLE' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLACK_TAN'
+    elif 'GRAY' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'GRAY'
+    elif 'SABLE' in train_df2.iloc[i,6].upper():
+        train_df2.iloc[i,6] = 'BLACK_TAN'
+    else:
+        train_df2.iloc[i,6] = 'OTHER'
+    
+train_df2['Breed'] = np.where('BULL' in upper(train_df2['Breed']), 'BULL',train_df2['Breed'])
 
 
 x_cat = pd.DataFrame(train_df2.iloc[0:,2])
@@ -105,6 +147,7 @@ x_cat_dict = x_cat.to_dict('records')
 vectorizer = DV( sparse = False )
 vectorized_sparse = vectorizer.fit_transform(x_cat_dict)
 test = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
+
 
 # Create Vectorizer
 d = [{'pet': 'cat'}, {'pet': 'dog'}]
@@ -137,3 +180,120 @@ enc.fit(Xcat)
 Xtran = enc.transform([0,1]).toarray()
 enc.n_values_
 enc.feature_indices_
+
+
+ET = ExtraTreesClassifier(n_estimators=40, max_depth=15, min_samples_split=1, random_state=0)
+Rf = RandomForestClassifier(n_estimators=40, max_depth=15, min_samples_split=5, random_state=0)
+A1 = AdaBoostClassifier(DecisionTreeClassifier(max_depth = 3),
+                        n_estimators = 100,
+                        learning_rate = 0.1)
+A2 = AdaBoostClassifier(DecisionTreeClassifier(max_depth = 3),
+                        n_estimators = 95,
+                        learning_rate = 0.1)
+A3 = AdaBoostClassifier(DecisionTreeClassifier(max_depth = 3),
+                        n_estimators = 105,
+                        learning_rate = 0.1)
+Rf.fit(X,Y)
+Rf.feature_importances_
+predict = Rf.predict_proba(X)
+cv_RF = cross_validation.cross_val_score(Rf, X, Y,scoring='f1_weighted')
+cv_ET = cross_validation.cross_val_score(ET, X, Y,scoring='f1_weighted')
+cv_ada = cross_validation.cross_val_score(A1, X, Y,scoring='f1_weighted')
+cv_ada2 = cross_validation.cross_val_score(A2, X, Y,scoring='f1_weighted')
+cv_ada3 = cross_validation.cross_val_score(A3, X, Y,scoring='f1_weighted')
+
+
+cv_ada.mean()
+cv_ada2.mean()
+cv_ada3.mean()
+
+#Align
+predict_set2 = pd.DataFrame(Y).join(pd.DataFrame(predict, columns=['Return_to_owner','Euthanasia','Adoption', 'Transfer', 'Died']))
+pd.unique(predict_set2['OutcomeType'])
+predict_set2['OutcomePred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['Return_to_ownerPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['EuthanasiaPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['AdoptionPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['TransferPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['DiedPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+
+for i in range(len(predict_set2['OutcomeType'])):
+    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 0
+    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 1
+    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 2
+    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 3
+    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 4
+
+
+    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,7] = 1
+    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,8] = 1
+    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,9] = 1
+    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,10] = 1
+    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,11] = 1
+
+#predict_set2['RateOverall'] = np.where(predict_set2['OutcomeType'] == predict_set2['OutcomePred'], 1, 0)
+#Overall_Accur_orig = predict_set2['RateOverall'].sum()/predict_set2['RateOverall'].count()
+
+y_val = predict_set2['OutcomeType']
+y_pred_val = predict_set2['OutcomePred']
+
+print(classification_report(y_val, y_pred_val))
+print(accuracy_score(y_val, y_pred_val))
+print(f1_score(y_val, y_pred_val, average='weighted'))
+# Precision is # Events Correctly Predicted, over total Predicted Events
+# Recall is # Events Correctly Predicted, over total Events
+
+# Drop 2 Weakest Features with ADABooster - Year and Quarter Accru = 0.644244079464 , F1-score = 0.627127423713
+# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru = 0.955778368065 , F1-score = 0.955700825809
+# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=3 and num trees from 10 to 20: 0.58243854989 , F1-score = 0.502211464657
+# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=5 and num trees from 10 to 20: 0.602080137678 , F1-score = 0.53818955028.
+# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=10 and num trees from 10 to 20: 0.602080137678 , F1-score = 0.53818955028.
+# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=10 and num trees from 10 to 40: 0.654233229825 , F1-score = 0.625549271101.
+# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=15 and num trees from 10 to 40: 0.746941524187 , F1-score = 0.73699278259.
+# Drop 2 Weakest Features with RandomForest - Year and Quarter Accru, changed mx_depth=15 and num trees from 10 to 40: 0.805641812264, F1-score = 0.802830835713.
+# Drop 2 Weakest Features with RandomForest - Year and Quarter Accru, changed mx_depth=15 and num trees from 10 to 40, min sample=5: 0.770062478955, F1-score = 0.762624962639.
+
+
+#Predict Y
+X2 = test_df.drop(test_df.columns[[0,7,9]], axis=1)
+predict = Rf.predict_proba(X2)
+
+
+#Align
+ident = test_df.iloc[0:,0]
+predict_set2 = pd.DataFrame(ident).join(pd.DataFrame(predict, columns=['Return_to_owner','Euthanasia','Adoption', 'Transfer', 'Died']))
+# NEED TO REARRANGE COLUMNS TO MATCH SUBMISSION FILE FORMAT
+predict_set2['AdoptionPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+predict_set2['DiedPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+predict_set2['EuthanasiaPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+predict_set2['Return_to_ownerPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+predict_set2['TransferPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+
+for i in range(len(predict_set2['ID'])):
+    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,9] = 1
+    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,8] = 1
+    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 1
+    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,10] = 1
+    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,7] = 1
+
+predict_set3 = predict_set2.drop(predict_set2.columns[[1,2,3,4,5,]], axis=1)
+predict_set4 = predict_set3.rename(columns={'AdoptionPred' : 'Adoption', 'DiedPred' : 'Died', 'EuthanasiaPred' : 'Euthanasia', 'Return_to_ownerPred' : 'Return_to_owner', 'TransferPred' : 'Transfer'})
+
+#Output Submission
+predict_set4.to_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/SubmissionFileRFv4.csv', header=1, index=False)
+
