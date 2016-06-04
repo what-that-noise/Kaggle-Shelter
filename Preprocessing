@@ -1,0 +1,139 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jun  2 10:55:33 2016
+
+@author: ane604
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May 19 16:20:48 2016
+
+
+PREPROCESSING
+
+"""
+
+# build a classifier with scikit-learn
+from sklearn.metrics import classification_report, accuracy_score, f1_score, confusion_matrix
+from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.feature_extraction import DictVectorizer as DV
+import pandas as pd
+from sklearn import cross_validation, preprocessing
+
+train_df = pd.read_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/train.csv.gz', header=0)
+train_df.loc[train_df['SexuponOutcome'].isnull(), 'SexuponOutcome' ] = 'NA'
+
+train_df.loc[train_df['AgeuponOutcome'].isnull(), 'AgeuponOutcome'] = 'NA'
+        
+train_df['Age_days'] = np.zeros((len(train_df['AgeuponOutcome']),1)).astype(int)
+
+for i in range(len(train_df['AgeuponOutcome'])):
+    if 'week' in train_df.iloc[i,7]:
+        train_df.iloc[i,10] = int(train_df.iloc[i,7].split(' ')[0]) * 7
+    elif 'year' in train_df.iloc[i,7]:
+        train_df.iloc[i,10] = int(train_df.iloc[i,7].split(' ')[0]) * 365
+    elif 'day' in train_df.iloc[i,7]:
+        train_df.iloc[i,10] = int(train_df.iloc[i,7].split(' ')[0]) * 1
+    elif 'month' in train_df.iloc[i,7]:
+        train_df.iloc[i,10] = int(train_df.iloc[i,7].split(' ')[0]) * 30
+
+train_df = train_df.drop(train_df.columns[[7]], axis=1)   
+train_df = train_df.rename(columns={'Age_days': 'AgeuponOutcome'})
+
+train_df['year'] = np.zeros((len(train_df['DateTime']),1)).astype(int)
+train_df['month'] = np.zeros((len(train_df['DateTime']),1)).astype(int)
+train_df['quarter'] = np.zeros((len(train_df['DateTime']),1)).astype(int)
+for i in range(len(train_df['DateTime'])):
+    train_df.iloc[i,10] = int(train_df.iloc[i,2].split('-')[0])
+    train_df.iloc[i,11] = int(train_df.iloc[i,2].split('-')[1])
+    if 1 <= train_df.iloc[i,11] <= 3:
+        train_df.iloc[i,12] = 1
+    elif 4 <= train_df.iloc[i,11] <= 6:
+        train_df.iloc[i,12] = 2
+    elif 7 <= train_df.iloc[i,11] <= 9:
+        train_df.iloc[i,12] = 3
+    else:
+        train_df.iloc[i,12] = 4
+
+
+train_df = train_df.drop(train_df.columns[[2,4]], axis=1)   
+train_df2 = train_df
+train_df2 = train_df2.fillna('NA')
+train_df2['Name'] = np.where(train_df2['Name'] == 'NA',0,1).astype(int)
+train_df2['AnimalType'] = np.where(train_df2['AnimalType']=='Dog',1,0).astype(int)
+for i in range(len(train_df2['Breed'])):
+    if 'BULL' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'BULL'
+    elif 'SHORTHAIR' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'SHORTHAIR'
+    elif 'TERRIER' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'TERRIER'
+    elif 'POODLE' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'POODLE'
+    elif 'MINIATURE' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'MINIATURE'
+    elif 'SHEPERD' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'SHEPERD'
+    elif 'RETRIEVER' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'RETRIEVER'
+    elif 'SIAMESE' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'SIAMESE'
+    elif 'SIAMESE' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'SIAMESE'
+    elif 'BEAGLE' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'BEAGLE'
+    elif 'BOXER' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'BOXER'
+    elif 'COLLIE' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'COLLIE'
+    elif 'DOMESTIC LONGHAIR' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'DOMESTIC LONGHAIR'
+    elif 'CATTLE' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'CATTLE'
+    elif 'HUSKY' in train_df2.iloc[i,5].upper():
+        train_df2.iloc[i,5] = 'HUSKY'
+    else train_df2.iloc[i,5] = 'OTHER'
+    
+    train_df2['Breed'] = np.where('BULL' in upper(train_df2['Breed']), 'BULL',train_df2['Breed'])
+
+
+x_cat = pd.DataFrame(train_df2.iloc[0:,2])
+x_cat_dict = x_cat.to_dict('records')
+#
+vectorizer = DV( sparse = False )
+vectorized_sparse = vectorizer.fit_transform(x_cat_dict)
+test = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
+
+# Create Vectorizer
+d = [{'pet': 'cat'}, {'pet': 'dog'}]
+vectorizer = DV( sparse = False )
+
+vectorized_sparse = vectorizer.fit_transform(d)
+test = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
+
+
+
+# Retain the categorical Columns
+train_df   = traindata[cat_col]
+# Convert Panda Data frame to Dict
+train_dict = train_df.T.to_dict().values()
+
+
+
+
+
+md = pd.read_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/ModelDatav1.csv', header=0)
+
+
+X, Y = md.drop(md.columns[[0,2]], axis=1), md.iloc[0:,2]
+X = X.drop(X.columns[[6,8]], axis=1)
+
+#Preprocess
+Xcat = X.iloc[0:,2]
+enc = preprocessing.OneHotEncoder()
+enc.fit(Xcat)
+Xtran = enc.transform([0,1]).toarray()
+enc.n_values_
+enc.feature_indices_
