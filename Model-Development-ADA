@@ -1,0 +1,160 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May 19 15:42:08 2016
+
+@author: ane604
+"""
+
+# build a classifier with scikit-learn
+
+import sklearn
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
+import pandas as pd
+
+md = pd.read_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/ModelDatav1.csv', header=0)
+
+X, Y = md.drop(md.columns[[0,2]], axis=1), md.iloc[0:,2]
+
+A1 = AdaBoostClassifier(DecisionTreeClassifier(max_depth = 3),
+                        n_estimators = 100,
+                        learning_rate = 0.1)
+
+A1.fit(X,Y)
+
+predict = A1.predict_proba(X)
+
+
+
+#Align
+predict_set2 = pd.DataFrame(Y).join(pd.DataFrame(predict, columns=['Return_to_owner','Euthanasia','Adoption', 'Transfer', 'Died']))
+pd.unique(predict_set2['OutcomeType'])
+predict_set2['OutcomePred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['Return_to_ownerPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['EuthanasiaPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['AdoptionPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['TransferPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+predict_set2['DiedPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
+
+for i in range(len(predict_set2['OutcomeType'])):
+    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 0
+    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 1
+    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 2
+    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 3
+    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 4
+
+
+    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,7] = 1
+    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,8] = 1
+    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,9] = 1
+    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,10] = 1
+    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,11] = 1
+
+predict_set2['RateOverall'] = np.where(predict_set2['OutcomeType'] == predict_set2['OutcomePred'], 1, 0)
+Overall_Accur_orig = predict_set2['RateOverall'].sum()/predict_set2['RateOverall'].count()
+
+y_val = predict_set2['OutcomeType']
+y_pred_val = predict_set2['OutcomePred']
+from sklearn.metrics import classification_report, accuracy_score, f1_score, confusion_matrix
+print(f1_score(y_val, y_pred_val, average='weighted'))
+print(classification_report(y_val, y_pred_val))
+print(accuracy_score(y_val, y_pred_val))
+print(confusion_matrix(y_val, y_pred_val))
+# Precision is # Events Correctly Predicted, over total Predicted Events
+# Recall is # Events Correctly Predicted, over total Events
+
+# all features accuracy = 0.639343035654
+# all features, change depth 2 to 3 = 0.64413184182
+# all features, change depth 2 to 3 and learning rate 0.1 to 0.2 = 0.640689887388
+# Drop 2 Weakest Features - Year and Quarter Accru = 0.644244079464 , F1-score = 0.627127423713
+
+A1.feature_importances_
+X = X.drop(X.columns[[6,8]], axis=1)
+
+# Drop Quarter  0.64413184182
+A1.feature_importances_
+X = X.drop(X.columns[[8]], axis=1)
+
+# Cutdown Features to 5 - Name, AnimalType, Sex, Color, Quarter - Accuracy = 0.60 worse
+X = X.drop(X.columns[[3,5,6,7]], axis=1)
+Overall_Accur_5 = predict_set2['RateOverall'].sum()/predict_set2['RateOverall'].count()
+
+
+
+
+
+#Predict Y
+X2 = test_df.drop(test_df.columns[[0,7,9]], axis=1)
+predict = A1.predict_proba(X2)
+
+
+#Align
+ident = test_df.iloc[0:,0]
+predict_set2 = pd.DataFrame(ident).join(pd.DataFrame(predict, columns=['Return_to_owner','Euthanasia','Adoption', 'Transfer', 'Died']))
+# NEED TO REARRANGE COLUMNS TO MATCH SUBMISSION FILE FORMAT
+predict_set2['AdoptionPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+predict_set2['DiedPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+predict_set2['EuthanasiaPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+predict_set2['Return_to_ownerPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+predict_set2['TransferPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
+
+for i in range(len(predict_set2['ID'])):
+    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,9] = 1
+    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,8] = 1
+    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,6] = 1
+    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,10] = 1
+    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
+        predict_set2.iloc[i,7] = 1
+
+predict_set3 = predict_set2.drop(predict_set2.columns[[1,2,3,4,5,]], axis=1)
+predict_set4 = predict_set3.rename(columns={'AdoptionPred' : 'Adoption', 'DiedPred' : 'Died', 'EuthanasiaPred' : 'Euthanasia', 'Return_to_ownerPred' : 'Return_to_owner', 'TransferPred' : 'Transfer'})
+
+#Output Submission
+predict_set4.to_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/SubmissionFileadav2.csv', header=1, index=False)
+
+
+
+
+
+
+
+
+
+
+
+
+
+#########################################################
+classifiers = [c.fit(_train_df.values[:,1:-1],
+                     _train_df.values[:,-1].astype(int)) \
+               for c in [A1]]
+results = [c.predict_proba(_validation_df.values[:,1:-1]) \
+           for c in classifiers]
+print(results[0])
+
+from sklearn.metrics import log_loss
+
+print([log_loss(_validation_df.values[:,-1].astype(int), r) for r in results])
+
+
+
+
+.reindex(columns = ['AnimalID', '_Name', '_NameFreq',
+                                       '_AnimalType', '_SexuponOutcome',
+                                       '_AgeuponOutcome', '_Breed', '_Color',
+                                       'Year', 'Month', 'Day', 'Hour', 'Minute',
+                                       '_OutcomeType'])
