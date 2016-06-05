@@ -136,6 +136,21 @@ for i in range(len(train_df2['Breed'])):
     else:
         train_df2.iloc[i,6] = 'OTHER'
 
+train_df2['AgeuponOutcome'] = train_df2['AgeuponOutcome']/365
+
+for i in range(len(train_df2['year'])):
+    if train_df2.iloc[i,10] == 1:
+        train_df2.iloc[i,10] = 'Q1'
+    elif train_df2.iloc[i,10] == 2:
+        train_df2.iloc[i,10] = 'Q2'
+    elif train_df2.iloc[i,10] == 3:
+        train_df2.iloc[i,10] = 'Q3'
+    elif train_df2.iloc[i,10] == 4:
+        train_df2.iloc[i,10] = 'Q4'
+    else:
+        train_df2.iloc[i,10] = 'OTHER'
+
+train_df2['year'] = train_df2['year'].astype(str)
 
 x_cat = pd.DataFrame(train_df2.iloc[0:,4:7])
 x_cat_dict = x_cat.to_dict('records')
@@ -144,6 +159,14 @@ vectorizer = DV( sparse = False )
 vectorized_sparse = vectorizer.fit_transform(x_cat_dict)
 test = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
 
+# Design Matrix
+x_cat = pd.DataFrame(train_df2.iloc[0:,4:])
+x_cat2 = x_cat.drop(x_cat.columns[[3,]], axis=1)
+x_cat_dict2 = x_cat2.to_dict('records')
+#
+vectorizer = DV( sparse = False )
+vectorized_sparse = vectorizer.fit_transform(x_cat_dict2)
+test2 = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
 
 # Create Vectorizer
 d = [{'pet': 'cat'}, {'pet': 'dog'}]
