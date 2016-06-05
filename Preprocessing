@@ -15,12 +15,9 @@ PREPROCESSING
 """
 
 # build a classifier with scikit-learn
-from sklearn.metrics import classification_report, accuracy_score, f1_score, confusion_matrix
-from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.feature_extraction import DictVectorizer as DV
 import pandas as pd
-from sklearn import cross_validation, preprocessing
+from sklearn import preprocessing
 
 train_df = pd.read_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/train.csv.gz', header=0)
 train_df.loc[train_df['SexuponOutcome'].isnull(), 'SexuponOutcome' ] = 'NA'
@@ -163,157 +160,16 @@ test = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
 x_cat = pd.DataFrame(train_df2.iloc[0:,4:])
 x_cat2 = x_cat.drop(x_cat.columns[[3,]], axis=1)
 x_cat_dict2 = x_cat2.to_dict('records')
-#
+#Vectorize
 vectorizer = DV( sparse = False )
 vectorized_sparse = vectorizer.fit_transform(x_cat_dict2)
-test2 = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
+design = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
 
-# Create Vectorizer
-d = [{'pet': 'cat'}, {'pet': 'dog'}]
-vectorizer = DV( sparse = False )
+design2 = design.drop(['Breed=OTHER','Color=OTHER', 'SexuponOutcome=Unknown', 'quarter=Q4', 'year=2016'], axis=1)
 
-vectorized_sparse = vectorizer.fit_transform(d)
-test = pd.DataFrame(vectorized_sparse, columns=[vectorizer.get_feature_names()])
-
+#Recombine
+train_df3 = train_df2.drop(['SexuponOutcome', 'Breed', 'Color', 'year', 'month', 'quarter'], axis=1)
+train_df4 = train_df3.join(design2)
 
 
-# Retain the categorical Columns
-train_df   = traindata[cat_col]
-# Convert Panda Data frame to Dict
-train_dict = train_df.T.to_dict().values()
-
-
-
-
-
-md = pd.read_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/ModelDatav1.csv', header=0)
-
-
-X, Y = md.drop(md.columns[[0,2]], axis=1), md.iloc[0:,2]
-X = X.drop(X.columns[[6,8]], axis=1)
-
-#Preprocess
-Xcat = X.iloc[0:,2]
-enc = preprocessing.OneHotEncoder()
-enc.fit(Xcat)
-Xtran = enc.transform([0,1]).toarray()
-enc.n_values_
-enc.feature_indices_
-
-
-ET = ExtraTreesClassifier(n_estimators=40, max_depth=15, min_samples_split=1, random_state=0)
-Rf = RandomForestClassifier(n_estimators=40, max_depth=15, min_samples_split=5, random_state=0)
-A1 = AdaBoostClassifier(DecisionTreeClassifier(max_depth = 3),
-                        n_estimators = 100,
-                        learning_rate = 0.1)
-A2 = AdaBoostClassifier(DecisionTreeClassifier(max_depth = 3),
-                        n_estimators = 95,
-                        learning_rate = 0.1)
-A3 = AdaBoostClassifier(DecisionTreeClassifier(max_depth = 3),
-                        n_estimators = 105,
-                        learning_rate = 0.1)
-Rf.fit(X,Y)
-Rf.feature_importances_
-predict = Rf.predict_proba(X)
-cv_RF = cross_validation.cross_val_score(Rf, X, Y,scoring='f1_weighted')
-cv_ET = cross_validation.cross_val_score(ET, X, Y,scoring='f1_weighted')
-cv_ada = cross_validation.cross_val_score(A1, X, Y,scoring='f1_weighted')
-cv_ada2 = cross_validation.cross_val_score(A2, X, Y,scoring='f1_weighted')
-cv_ada3 = cross_validation.cross_val_score(A3, X, Y,scoring='f1_weighted')
-
-
-cv_ada.mean()
-cv_ada2.mean()
-cv_ada3.mean()
-
-#Align
-predict_set2 = pd.DataFrame(Y).join(pd.DataFrame(predict, columns=['Return_to_owner','Euthanasia','Adoption', 'Transfer', 'Died']))
-pd.unique(predict_set2['OutcomeType'])
-predict_set2['OutcomePred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
-predict_set2['Return_to_ownerPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
-predict_set2['EuthanasiaPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
-predict_set2['AdoptionPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
-predict_set2['TransferPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
-predict_set2['DiedPred'] = np.zeros((len(predict_set2['OutcomeType']),1)).astype(int)
-
-for i in range(len(predict_set2['OutcomeType'])):
-    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,6] = 0
-    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,6] = 1
-    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,6] = 2
-    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,6] = 3
-    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,6] = 4
-
-
-    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,7] = 1
-    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,8] = 1
-    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,9] = 1
-    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,10] = 1
-    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,11] = 1
-
-#predict_set2['RateOverall'] = np.where(predict_set2['OutcomeType'] == predict_set2['OutcomePred'], 1, 0)
-#Overall_Accur_orig = predict_set2['RateOverall'].sum()/predict_set2['RateOverall'].count()
-
-y_val = predict_set2['OutcomeType']
-y_pred_val = predict_set2['OutcomePred']
-
-print(classification_report(y_val, y_pred_val))
-print(accuracy_score(y_val, y_pred_val))
-print(f1_score(y_val, y_pred_val, average='weighted'))
-# Precision is # Events Correctly Predicted, over total Predicted Events
-# Recall is # Events Correctly Predicted, over total Events
-
-# Drop 2 Weakest Features with ADABooster - Year and Quarter Accru = 0.644244079464 , F1-score = 0.627127423713
-# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru = 0.955778368065 , F1-score = 0.955700825809
-# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=3 and num trees from 10 to 20: 0.58243854989 , F1-score = 0.502211464657
-# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=5 and num trees from 10 to 20: 0.602080137678 , F1-score = 0.53818955028.
-# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=10 and num trees from 10 to 20: 0.602080137678 , F1-score = 0.53818955028.
-# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=10 and num trees from 10 to 40: 0.654233229825 , F1-score = 0.625549271101.
-# Drop 2 Weakest Features with ExtraTrees - Year and Quarter Accru, changed mx_depth=15 and num trees from 10 to 40: 0.746941524187 , F1-score = 0.73699278259.
-# Drop 2 Weakest Features with RandomForest - Year and Quarter Accru, changed mx_depth=15 and num trees from 10 to 40: 0.805641812264, F1-score = 0.802830835713.
-# Drop 2 Weakest Features with RandomForest - Year and Quarter Accru, changed mx_depth=15 and num trees from 10 to 40, min sample=5: 0.770062478955, F1-score = 0.762624962639.
-
-
-#Predict Y
-X2 = test_df.drop(test_df.columns[[0,7,9]], axis=1)
-predict = Rf.predict_proba(X2)
-
-
-#Align
-ident = test_df.iloc[0:,0]
-predict_set2 = pd.DataFrame(ident).join(pd.DataFrame(predict, columns=['Return_to_owner','Euthanasia','Adoption', 'Transfer', 'Died']))
-# NEED TO REARRANGE COLUMNS TO MATCH SUBMISSION FILE FORMAT
-predict_set2['AdoptionPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
-predict_set2['DiedPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
-predict_set2['EuthanasiaPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
-predict_set2['Return_to_ownerPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
-predict_set2['TransferPred'] = np.zeros((len(predict_set2['ID']),1)).astype(int)
-
-for i in range(len(predict_set2['ID'])):
-    if predict_set2.iloc[i,1] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,9] = 1
-    elif predict_set2.iloc[i,2] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,8] = 1
-    elif predict_set2.iloc[i,3] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,6] = 1
-    elif predict_set2.iloc[i,4] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,10] = 1
-    elif predict_set2.iloc[i,5] == max(predict_set2.iloc[i,1], predict_set2.iloc[i,2], predict_set2.iloc[i,3], predict_set2.iloc[i,4], predict_set2.iloc[i,5]):
-        predict_set2.iloc[i,7] = 1
-
-predict_set3 = predict_set2.drop(predict_set2.columns[[1,2,3,4,5,]], axis=1)
-predict_set4 = predict_set3.rename(columns={'AdoptionPred' : 'Adoption', 'DiedPred' : 'Died', 'EuthanasiaPred' : 'Euthanasia', 'Return_to_ownerPred' : 'Return_to_owner', 'TransferPred' : 'Transfer'})
-
-#Output Submission
-predict_set4.to_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/SubmissionFileRFv4.csv', header=1, index=False)
-
-
+train_df4.to_csv('C:/Users/ANE604/Documents/Python Scripts/Kaggle - Shelter/After Preprocessing/ModelDataDesignMatrix.csv', header=1, index=False)
